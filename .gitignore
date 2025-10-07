@@ -9,4 +9,5 @@
 # Config files with secrets
 config/secrets/*.env
 config/**/*.pem
+config/letsencrypt
 config/nginx/ssl
