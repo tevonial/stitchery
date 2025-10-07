@@ -1,0 +1,20 @@
+name: 'stitchery'
+version: '1.0.0'
+
+services:
+    dev:
+        build: .devcontainer
+        volumes:
+            - .:/workspace:cached
+
+    api:
+        build:
+            context: ./stitchery-api
+            target: dev
+
+    frontend:
+        build:
+            context: ./stitchery-frontend
+            target: dev
+
+

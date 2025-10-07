@@ -1,0 +1,72 @@
+name: 'stitchery'
+
+services:
+    frontend:
+        build:
+            context: ./stitchery-frontend
+            target: prod
+        restart: always
+        environment:
+            - FRONTEND_PORT
+            - API_PORT
+        ports:
+            - "${FRONTEND_PORT:-8080}:${FRONTEND_PORT:-8080}"            
+
+    api:
+        build: ./stitchery-api
+        restart: always
+        environment:
+            - API_PORT
+            - DB_HOST
+            - DB_PORT
+        secrets:
+            - db-credentials
+
+    db:
+        build: ./stitchery-db
+        restart: always
+        volumes:
+            - db-data:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -d stitchery -U stitchery"]
+            interval: 10s
+            timeout: 3s
+            retries: 3
+        environment:
+            - POSTGRES_PORT=${DB_PORT}
+        secrets:
+            - db-credentials
+
+    nginx:
+        image: nginx:latest
+        restart: unless-stopped
+        environment:
+            - APP_DOMAIN
+        ports:
+            - 80:80
+            - 443:443
+        depends_on:
+            - frontend
+            - api
+            - db
+            - certbot
+        volumes:
+            - "${CONFIG_DIR}/nginx/templates:/etc/nginx/templates:ro"
+            - "${CONFIG_DIR}/nginx/docker-entrypoint.d/autoreload.sh:/docker-entrypoint.d/autoreload.sh:ro"
+            - "${CONFIG_DIR}/nginx/ssl:/etc/nginx/ssl:ro"
+            - "${CONFIG_DIR}/letsencrypt:/etc/letsencrypt:ro"
+            - "${CONFIG_DIR}/certbot/www:/var/www/certbot:ro"
+
+    certbot:
+        image: certbot/certbot:latest
+        volumes:
+            - "${CONFIG_DIR}/letsencrypt:/etc/letsencrypt"
+            - "${CONFIG_DIR}/certbot/www:/var/www/certbot"
+        entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"  # Renew certificates every 12 hours
+
+volumes:
+    db-data:
+
+secrets:
+    db-credentials:
+        file: "${SECRETS_DIR}${DB_CREDENTIALS_FILE}"
