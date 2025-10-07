@@ -1,0 +1,6 @@
+[submodule "stitchery-frontend"]
+	path = stitchery-frontend
+	url = https://github.com/tevonial/stitchery-frontend.git
+[submodule "stitchery-api"]
+	path = stitchery-api
+	url = https://github.com/tevonial/stitchery-api.git
