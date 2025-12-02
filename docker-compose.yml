@@ -4,38 +4,50 @@ services:
     frontend:
         build:
             context: ./stitchery-frontend
-            target: prod
-        restart: always
+            target: dev
+        restart: unless-stopped
         environment:
             - FRONTEND_PORT
             - API_PORT
         ports:
-            - "${FRONTEND_PORT:-8080}:${FRONTEND_PORT:-8080}"            
+            - "${FRONTEND_PORT:-8080}:${FRONTEND_PORT:-8080}"
+        volumes:
+            - ./stitchery-frontend:/app:cached
 
     api:
         build:
             context: ./stitchery-api
-            target: prod
-        restart: always
+            target: dev
+        restart: unless-stopped
         environment:
             - API_PORT
-            - DB_HOST
-            - DB_PORT
+            - APOLLO_KEY
+            - APOLLO_GRAPH_REF
+            - APOLLO_SCHEMA_REPORTING
+            - DB_CONNECTION_LIMIT
+            - DB_URI_SCHEME
+            - DB_CREDENTIALS_FILE=/run/secrets/$DB_CREDENTIALS_FILE
+            - JWT_SECRET_FILE=/run/secrets/$JWT_SECRET_FILE
+        ports:
+            - "${API_PORT:-3000}:${API_PORT:-3000}"
+        volumes:
+            - ./stitchery-api:/app:cached
         secrets:
             - db-credentials
+            - jwt-secret
 
     db:
         build: ./stitchery-db
-        restart: always
-        volumes:
-            - db-data:/var/lib/postgresql/data
+        restart: unless-stopped
         healthcheck:
-            test: ["CMD-SHELL", "pg_isready -d stitchery -U stitchery"]
+            test: [ "CMD-SHELL", "pg_isready -d stitchery -U stitchery" ]
             interval: 10s
             timeout: 3s
             retries: 3
-        environment:
-            - POSTGRES_PORT=${DB_PORT}
+        volumes:
+            - db-data:/var/lib/postgresql/data
+        ports:
+            - "5432:5432"
         secrets:
             - db-credentials
 
@@ -61,14 +73,18 @@ services:
 
     certbot:
         image: certbot/certbot:latest
+        restart: unless-stopped
         volumes:
             - "${CONFIG_DIR}/letsencrypt:/etc/letsencrypt"
             - "${CONFIG_DIR}/certbot/www:/var/www/certbot"
-        entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"  # Renew certificates every 12 hours
+        entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 volumes:
     db-data:
 
+
 secrets:
     db-credentials:
         file: "${SECRETS_DIR}${DB_CREDENTIALS_FILE}"
+    jwt-secret:
+        file: "${SECRETS_DIR}${JWT_SECRET_FILE}"
