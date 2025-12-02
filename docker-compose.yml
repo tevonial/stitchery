@@ -51,6 +51,19 @@ services:
         secrets:
             - db-credentials
 
+    pg-admin:
+        image: dpage/pgadmin4:latest
+        restart: unless-stopped
+        environment:
+            - PGADMIN_DEFAULT_EMAIL
+            - PGADMIN_DEFAULT_PASSWORD_FILE=/run/secrets/pg-admin-password
+        volumes:
+            - pg-admin-data:/var/lib/pgadmin
+            - "${CONFIG_DIR}/pgadmin4/config_local.py:/pgadmin4/config_local.py:ro"
+            - "${CONFIG_DIR}/pgadmin4/servers.json:/pgadmin4/servers.json:ro"
+        secrets:
+            - pg-admin-password
+
     nginx:
         image: nginx:latest
         restart: unless-stopped
@@ -81,6 +94,7 @@ services:
 
 volumes:
     db-data:
+    pg-admin-data:
 
 
 secrets:
@@ -88,3 +102,5 @@ secrets:
         file: "${SECRETS_DIR}${DB_CREDENTIALS_FILE}"
     jwt-secret:
         file: "${SECRETS_DIR}${JWT_SECRET_FILE}"
+    pg-admin-password:
+        file: "${SECRETS_DIR}${PGADMIN_PASSWORD_FILE}"
