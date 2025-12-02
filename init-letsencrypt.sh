@@ -10,14 +10,19 @@ if ! [ -x "$(command -v docker compose)" ]; then
     exit 1
 fi
 
-domains=(${APP_DOMAIN:-example.com})
 nginx_config="${CONFIG_DIR:-./config}/nginx"
 certbot_config="${CONFIG_DIR:-./config}/certbot"
 letsencrypt_config="${CONFIG_DIR:-./config}/letsencrypt"
 rsa_key_size=${RSA_KEY_SIZE:-4096}
+domain="$APP_DOMAIN"
 
-if [ -d "$CONFIG_DIR" ]; then
-    read -p "Existing data found for $domains. Continue and replace existing certificate? (y/N) " decision
+if [ -z "$domain" ]; then
+    echo "Error: APP_DOMAIN is not set in the environment." >&2
+    exit 1
+fi
+
+if [ -d "$letsencrypt_config/live/$domain" ]; then
+    read -p "Existing data found for $domain. Continue and replace existing certificate? (y/N) " decision
     if [ "$decision" != "Y" ] && [ "$decision" != "y" ]; then
         exit
     fi
@@ -31,28 +36,28 @@ if [ ! -e "$nginx_options/options-ssl-nginx.conf" ] || [ ! -e "$nginx_options/ss
     curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem >"$nginx_config/options/ssl-dhparams.pem"
 fi
 
-printf "\n### Creating dummy certificate for %s ...\n" $domains
-mkdir -p "$letsencrypt_config/live/$domains"
-certs_dir="/etc/letsencrypt/live/$domains"
+printf "\n### Creating dummy certificate for %s ...\n" $domain
+mkdir -p "$letsencrypt_config/live/$domain"
+certs_dir="/etc/letsencrypt/live/$domain"
 
 docker compose -f "docker-compose.yml" run --rm --entrypoint "\
   openssl req -x509 -nodes -newkey rsa:$rsa_key_size -days 1\
     -config '/etc/ssl/openssl.cnf' \
     -keyout '$certs_dir/privkey.pem' \
     -out '$certs_dir/fullchain.pem' \
-    -subj '/CN=$domains'" certbot
+    -subj '/CN=$domain'" certbot
 
 printf "\n### Starting nginx ...\n"
 docker compose  -f "docker-compose.yml" up --force-recreate -d nginx
 
-printf "\n### Deleting dummy certificate for %s ...\n" $domains
+printf "\n### Deleting dummy certificate for %s ...\n" $domain
 docker compose  -f "docker-compose.yml" run --rm --entrypoint "\
-  rm -Rf $letsencrypt_config/live/$domains && \
-  rm -Rf $letsencrypt_config/archive/$domains && \
-  rm -Rf $letsencrypt_config/renewal/$domains.conf" certbot
+  rm -Rf $letsencrypt_config/live/$domain && \
+  rm -Rf $letsencrypt_config/archive/$domain && \
+  rm -Rf $letsencrypt_config/renewal/$domain.conf" certbot
 
-printf "\n### Requesting Let's Encrypt certificate for %s ...\n" $domains
-#Join $domains to -d args
+printf "\n### Requesting Let's Encrypt certificate for %s ...\n" $domain
+#Join $domain to -d args
 domain_args=""
 for domain in "${domains[@]}"; do
     domain_args="$domain_args -d $domain"
@@ -68,7 +73,7 @@ esac
 if [ $CERTBOT_STAGING = "true" ]; then staging_arg="--staging"; fi
 
 docker compose -f "docker-compose.yml" run --rm --entrypoint "\
-  echo 'nginx $domains' | sudo tee -a /etc/hosts >/dev/null && \
+  echo 'nginx $domain' | sudo tee -a /etc/hosts >/dev/null && \
   certbot certonly --webroot -w /var/www/certbot \
     $staging_arg \
     $email_arg \
