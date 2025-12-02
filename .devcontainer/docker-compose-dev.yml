@@ -5,3 +5,11 @@ services:
         build: .
         volumes:
             - ..:/workspace:cached
+            - bash_history:/commandhistory
+            - node_modules_frontend:/workspace/stitchery-frontend/node_modules
+            - node_modules_api:/workspace/stitchery-api/node_modules
+
+volumes:
+    bash_history:
+    node_modules_frontend:
+    node_modules_api:
