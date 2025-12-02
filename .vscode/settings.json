@@ -1,5 +1,9 @@
 {
     "eslint.workingDirectories": [
         {"mode": "auto"}
-    ]
+    ],
+    "editor.formatOnSave": true,
+    "[prisma]": {
+        "editor.defaultFormatter": "Prisma.prisma"
+    },
 }

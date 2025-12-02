@@ -1,0 +1,41 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "[api] dev:debug",
+			"type": "docker-compose",
+			"dockerCompose": {
+				"up": {
+					"services": [
+						"api"
+					],
+				},
+				"files": [
+					"${workspaceFolder}/docker-compose.yml",
+					"${workspaceFolder}/docker-compose.debug.yml"
+				],
+			},
+			"isBackground": true,
+			"problemMatcher": {
+				"fileLocation": [
+					"relative",
+					"${workspaceFolder}"
+				],
+				"pattern": {
+					"regexp": "^(.*):(\\d+):(\\d+):\\s+(ERROR|WARNING):\\s+(\\.*)$",
+					"file": 1,
+					"line": 2,
+					"column": 3,
+					"severity": 4,
+					// "code": 5,
+					"message": 5
+				},
+				"background": {
+					"activeOnStart": true,
+					"endsPattern": "^.*\\[tsx\\] change in.*$",
+					"beginsPattern": "^.*Apollo server ready at.*$"
+				}
+			}
+		},
+	]
+}
