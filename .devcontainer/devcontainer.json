@@ -1,10 +1,24 @@
 {
     "name": "stitchery",
-    "dockerComposeFile": ["../docker-compose.yml", "docker-compose-dev.yml"],
-    "service": "dev", 
-    "shutdownAction": "none",
+    "dockerComposeFile": [
+        "docker-compose-dev.yml"
+    ],
+    "service": "dev",
     "workspaceFolder": "/workspace",
     "features": {
-        "ghcr.io/devcontainers/features/docker-in-docker:latest": {}
-    }
+        "ghcr.io/devcontainers/features/docker-in-docker:latest": {
+            "version": "latest",
+            "moby": true
+        }
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "hashicorp.hcl",
+                "dbaeumer.vscode-eslint",
+                "Prisma.prisma"
+            ]
+        }
+    },
+    "postCreateCommand": ".devcontainer/install-dependencies.sh"
 }
