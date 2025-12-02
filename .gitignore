@@ -6,8 +6,14 @@
 !.vscode/extensions.json
 .history/*
 
-# Config files with secrets
-config/secrets/*.env
+# Config files with secrets (allow templates)
+config/secrets/*
+!config/secrets/*.template
+
+# SSL
 config/**/*.pem
 config/letsencrypt
 config/nginx/ssl
+
+# PGAdmin4
+config/pgadmin4
