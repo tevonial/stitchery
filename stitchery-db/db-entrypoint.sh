@@ -1,20 +1,34 @@
 #!/usr/bin/env bash
 
-echo "Beginning db-entrypoint.sh"
-entrypoint_dir="/entrypoint.d"
+echo "===> Beginning db-entrypoint.sh"
+
+ENTRYPOINT_DIR="/entrypoint.d"
+DOCKER_ENTRYPOINT="$(command -v docker-entrypoint.sh)"
+
+# Ensure credentials file exists
+if [[ ! -f "$DB_CREDENTIALS_FILE" ]]; then
+    echo "Error: No database credentials secret found at '$DB_CREDENTIALS_FILE'."
+    exit 1
+fi
+
+if ! type -P $main_entrypoint >/dev/null 2>&1; then
+    echo "Error: Main entrypoint script '$DOCKER_ENTRYPOINT' not found or not executable."
+    exit 1
+fi
+
 
 # Process entrypoint scripts and environment files
 function process_entrypoints {
     for dir in "$@"; do
-        echo "Processing entrypoint directory: '$dir'"
-        if [ -d "$dir" ]; then
+        if [[ -d "$dir" ]]; then
+            echo "Processing entrypoint directory: '$dir'"
             for ep in "$dir"/*; do
                 ext="${ep##*.}"
-                if [ "${ext}" = "env" ] && [ -f "${ep}" ]; then
+                if [[ "${ext}" = "env" ]] && [[ -f "${ep}" ]]; then
                     # source files ending in ".env"
                     echo "Sourcing: ${ep}"
                     set -a && . "${ep}" && set +a
-                elif [ "${ext}" = "sh" ] && [ -x "${ep}" ]; then
+                elif [[ "${ext}" = "sh" ]] && [[ -x "${ep}" ]]; then
                     # run scripts ending in ".sh"
                     echo "Running: ${ep}"
                     "${ep}"
@@ -26,28 +40,11 @@ function process_entrypoints {
     done
 }
 
-db_credentials="/run/secrets/db-credentials"
-if [ -f "$db_credentials" ]; then
-    # Symlink the database credentials to etc/entrypoint.d for processing
-    ln -s $db_credentials "${entrypoint_dir}/db-credentials.env"
-else
-    echo "Error: No database credentials secret found at '$db_credentials'."
-    exit 1
-fi
+# Add database credentials to etc/entrypoint.d with symlink
+# Then, begin processing the contents of entrypoint directory
 
-process_entrypoints $entrypoint_dir
+ln -s $DB_CREDENTIALS_FILE "${ENTRYPOINT_DIR}/db-credentials.env"
+process_entrypoints $ENTRYPOINT_DIR
 
-# Ensure the main entrypoint script exists and is executable
-main_entrypoint="docker-entrypoint.sh"
-if type -P $main_entrypoint >/dev/null 2>&1; then
-    echo "Returning to main entrypoint"
-    echo "Running: $main_entrypoint $@"
-    echo "$(which $main_entrypoint)"
-    echo "POSTGRES_USER: $POSTGRES_USER"
-    echo "POSTGRES_DB: $POSTGRES_DB"
-    echo "POSTGRES_PORT: $POSTGRES_PORT"
-    exec $main_entrypoint $@
-else
-    echo "Error: Main entrypoint script '$main_entrypoint' not found or not executable."
-    exit 1
-fi
+echo "<=== Returning control to main entrypoint script ($(which $DOCKER_ENTRYPOINT))"
+exec $DOCKER_ENTRYPOINT "$@"
