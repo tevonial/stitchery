@@ -2,6 +2,16 @@ name: 'stitchery'
 
 services:
     api:
+        command: "npm run dev:inspect"
+        environment:
+            - NODE_INSPECT=true
         ports:
             - "9229:9229"
+
+    frontend:
         command: "npm run dev:inspect"
+        ports:
+            - "9230:9229"
+        environment:
+            - NODE_TLS_REJECT_UNAUTHORIZED=0
+        

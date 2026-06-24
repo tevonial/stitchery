@@ -6,35 +6,56 @@ services:
             context: ./stitchery-frontend
             target: dev
         restart: unless-stopped
-        environment:
-            - FRONTEND_PORT
-            - API_PORT
+        depends_on:
+            - api
+            - nginx
         ports:
             - "${FRONTEND_PORT:-8080}:${FRONTEND_PORT:-8080}"
         volumes:
             - ./stitchery-frontend:/app:cached
+            - ./.env:/var/env2ts/.env:ro
 
     api:
         build:
             context: ./stitchery-api
             target: dev
         restart: unless-stopped
+        depends_on:
+            - redis
+            - db
+            - nginx
         environment:
-            - API_PORT
+            - APP_DOMAIN
+            - API_PORT_GRAPHQL
+            - API_PORT_REST
+            - CONNECT_CONFIG_DIR
             - APOLLO_KEY
             - APOLLO_GRAPH_REF
             - APOLLO_SCHEMA_REPORTING
             - DB_CONNECTION_LIMIT
             - DB_URI_SCHEME
+            - REDIS_HOST
             - DB_CREDENTIALS_FILE=/run/secrets/$DB_CREDENTIALS_FILE
             - JWT_SECRET_FILE=/run/secrets/$JWT_SECRET_FILE
+            - CONNECT_SECRET_FILE=/run/secrets/$CONNECT_SECRET_FILE
         ports:
-            - "${API_PORT:-3000}:${API_PORT:-3000}"
+            - ${API_PORT_GRAPHQL:-3000}:${API_PORT_GRAPHQL:-3000}
+            - ${API_PORT_REST:-3001}:${API_PORT_REST:-3001}
         volumes:
             - ./stitchery-api:/app:cached
+            - "${CONFIG_DIR}/connect:${CONNECT_CONFIG_DIR}"
         secrets:
             - db-credentials
             - jwt-secret
+            - connect-secret
+
+    redis:
+        image: redis:alpine
+        restart: unless-stopped
+        ports:
+            - "6379:6379"
+        volumes:
+            - redis-data:/data
 
     db:
         build: ./stitchery-db
@@ -44,8 +65,10 @@ services:
             interval: 10s
             timeout: 3s
             retries: 3
+        environment:
+            - DB_CREDENTIALS_FILE=/run/secrets/$DB_CREDENTIALS_FILE
         volumes:
-            - db-data:/var/lib/postgresql/data
+            - db-data:/var/lib/postgresql
         ports:
             - "5432:5432"
         secrets:
@@ -69,38 +92,42 @@ services:
         restart: unless-stopped
         environment:
             - APP_DOMAIN
+            - API_PORT_GRAPHQL
+            - API_PORT_REST
+            - FRONTEND_PORT
+            - NGINX_ENVSUBST_FILTER=^(APP_DOMAIN|API_PORT_GRAPHQL|API_PORT_REST|FRONTEND_PORT)$
         ports:
             - 80:80
             - 443:443
-        depends_on:
-            - frontend
-            - api
-            - db
-            - certbot
         volumes:
             - "${CONFIG_DIR}/nginx/templates:/etc/nginx/templates:ro"
             - "${CONFIG_DIR}/nginx/docker-entrypoint.d/autoreload.sh:/docker-entrypoint.d/autoreload.sh:ro"
             - "${CONFIG_DIR}/nginx/ssl:/etc/nginx/ssl:ro"
-            - "${CONFIG_DIR}/letsencrypt:/etc/letsencrypt:ro"
+            - "${CONFIG_DIR}/nginx/html:/var/www/html:ro"
+            - "${CONFIG_DIR}/certbot/letsencrypt/certificates:/etc/letsencrypt:ro"
             - "${CONFIG_DIR}/certbot/www:/var/www/certbot:ro"
+            - "${ASSETS_DIR}:/var/www/assets:ro"
 
     certbot:
         image: certbot/certbot:latest
         restart: unless-stopped
         volumes:
-            - "${CONFIG_DIR}/letsencrypt:/etc/letsencrypt"
+            - "${CONFIG_DIR}/certbot/letsencrypt/certificates:/etc/letsencrypt"
+            - "${CONFIG_DIR}/certbot/letsencrypt/config:/var/lib/letsencrypt"
             - "${CONFIG_DIR}/certbot/www:/var/www/certbot"
         entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 volumes:
-    db-data:
     pg-admin-data:
-
+    db-data:
+    redis-data:
 
 secrets:
+    pg-admin-password:
+        file: "${SECRETS_DIR}${PGADMIN_PASSWORD_FILE}"
     db-credentials:
         file: "${SECRETS_DIR}${DB_CREDENTIALS_FILE}"
     jwt-secret:
         file: "${SECRETS_DIR}${JWT_SECRET_FILE}"
-    pg-admin-password:
-        file: "${SECRETS_DIR}${PGADMIN_PASSWORD_FILE}"
+    connect-secret:
+        file: "${SECRETS_DIR}${CONNECT_SECRET_FILE}"
