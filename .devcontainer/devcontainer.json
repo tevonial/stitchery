@@ -6,17 +6,18 @@
     "service": "dev",
     "workspaceFolder": "/workspace",
     "features": {
-        "ghcr.io/devcontainers/features/docker-in-docker:latest": {
-            "version": "latest",
-            "moby": true
-        }
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {}
     },
     "customizations": {
         "vscode": {
             "extensions": [
                 "hashicorp.hcl",
                 "dbaeumer.vscode-eslint",
-                "Prisma.prisma"
+                "Prisma.prisma",
+                "esbenp.prettier-vscode",
+                "apollographql.vscode-apollo",
+                "Angular.ng-template",
+                "dbcode.dbcode"
             ]
         }
     },

@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM mcr.microsoft.com/devcontainers/typescript-node:22-bookworm
+FROM mcr.microsoft.com/devcontainers/typescript-node:24-bookworm
 WORKDIR /workspace
 
 ARG USERNAME=node
