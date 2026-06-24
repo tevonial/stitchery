@@ -1,9 +1,74 @@
 {
     "eslint.workingDirectories": [
-        {"mode": "auto"}
+        {
+            "mode": "auto"
+        }
     ],
     "editor.formatOnSave": true,
     "[prisma]": {
         "editor.defaultFormatter": "Prisma.prisma"
     },
+    "diffEditor.codeLens": true,
+    "notebook.codeActionsOnSave": {},
+    "files.associations": {
+        "*.env": "properties"
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[html]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[scss]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "docwriter.style": "JSDoc",
+    "docwriter.progress.trackFunctions": true,
+    "docwriter.progress.trackMethods": true,
+    "docwriter.hotkey.mac": "⌘ + .",
+    "dbcode.connections": [
+        {
+            "connectionId": "y6uv9W46l8zg29LrU6xLs",
+            "name": "redis",
+            "driver": "redis",
+            "color": "#F00019",
+            "connectionType": "host",
+            "host": "127.0.0.1",
+            "port": 6379,
+            "ssl": false,
+            "username": "default",
+            "savePassword": "na",
+            "database": "0",
+            "readOnly": false,
+            "connectionTimeout": 30,
+            "driverOptions": {
+                "maxScanKeys": 50000
+            }
+        },
+        {
+            "connectionId": "WxQVGVPOUOdnu4ild_d5r",
+            "name": "postgres",
+            "driver": "postgres",
+            "color": "#33B8FF",
+            "connectionType": "host",
+            "host": "127.0.0.1",
+            "port": 5432,
+            "ssl": false,
+            "authMethod": "password",
+            "username": "stitchery",
+            "password": "",
+            "savePassword": "secretStorage",
+            "database": "stitchery",
+            "readOnly": false,
+            "postConnectionSqlType": "inline",
+            "connectionTimeout": 30,
+            "pinnedConnectionTimeout": "0",
+            "introspection": {
+                "progressive": false
+            }
+        }
+    ]
 }

@@ -15,23 +15,58 @@
             "autoAttachChildProcesses": true,
             "smartStep": true,
             "skipFiles": [
-                "${workspaceFolder}/**/node_modules/**/*.js",
-            ]
+                "${workspaceFolder}/**/node_modules/**/*.js"
+            ],
+            "continueOnAttach": true
         },
         {
-            "name": "[frontend] debug",
+            "name": "[frontend] browser debug",
             "presentation": {
                 "group": "frontend",
                 "order": 1
             },
-            "type": "msedge",
+            "type": "editor-browser",
             "request": "launch",
-            "url": "http://stitchery.localhost/",
-            "webRoot": "${workspaceFolder}/stitchery-frontend/src",
+            "preLaunchTask": "[frontend] dev:debug",
+            "url": "https://stitchery.localhost",
+            "webRoot": "${workspaceFolder}/stitchery-frontend/",
+            "smartStep": true,
+            // "skipFiles": [
+            //     "${workspaceFolder}/**/node_modules/**/*.js"
+            // ],
+        },
+        {
+            "name": "[frontend] node attach",
+            "presentation": {
+                "group": "frontend",
+                "order": 2
+            },
+            "env": {
+                "ENV2TS_INSPECT": "true"
+            },
+            "type": "node",
+            "request": "attach",
+            "port": 9230,
+            "remoteRoot": "/app",
+            "localRoot": "${workspaceFolder}/stitchery-frontend",
+            "preLaunchTask": "[frontend] dev",
+            "autoAttachChildProcesses": false,
+            "attachExistingChildren": false,
             "smartStep": true,
             "skipFiles": [
                 "${workspaceFolder}/**/node_modules/**/*.js"
-            ]
-        }
+            ],
+            "restart": true
+        },
+    ],
+    "compounds": [
+        {
+            "name": "[fullstack] Debug",
+            "configurations": [
+                "[api] debug",
+                "[frontend] browser debug"
+            ],
+            "preLaunchTask": "[nginx] reload"
+        },
     ]
 }

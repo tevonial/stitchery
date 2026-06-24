@@ -13,29 +13,156 @@
 				"files": [
 					"${workspaceFolder}/docker-compose.yml",
 					"${workspaceFolder}/docker-compose.debug.yml"
-				],
+				]
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": true
 			},
 			"isBackground": true,
-			"problemMatcher": {
-				"fileLocation": [
-					"relative",
-					"${workspaceFolder}"
-				],
-				"pattern": {
-					"regexp": "^(.*):(\\d+):(\\d+):\\s+(ERROR|WARNING):\\s+(\\.*)$",
-					"file": 1,
-					"line": 2,
-					"column": 3,
-					"severity": 4,
-					// "code": 5,
-					"message": 5
-				},
-				"background": {
-					"activeOnStart": true,
-					"endsPattern": "^.*\\[tsx\\] change in.*$",
-					"beginsPattern": "^.*Apollo server ready at.*$"
+			"problemMatcher": [
+				{
+					"pattern": [
+						{
+							"regexp": ".",
+							"file": 1,
+							"location": 2,
+							"message": 3
+						}
+					],
+					"background": {
+						"activeOnStart": true,
+						"beginsPattern": "[tsx] change in .* Restarting\\.\\.\\.",
+						"endsPattern": "All services started|Debugger listening on "
+					}
 				}
-			}
+			]
+		},
+		{
+			"label": "[frontend] dev:debug",
+			"type": "docker-compose",
+			"dockerCompose": {
+				"up": {
+					"services": [
+						"frontend"
+					]
+				},
+				"files": [
+					"${workspaceFolder}/docker-compose.yml",
+				]
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": true
+			},
+			"isBackground": true,
+			"problemMatcher": [
+				{
+					"pattern": [
+						{
+							"regexp": ".",
+							"file": 1,
+							"location": 2,
+							"message": 3
+						}
+					],
+					"background": {
+						"activeOnStart": true,
+						"beginsPattern": "Changes detected. Rebuilding...",
+						"endsPattern": "Application bundle generation complete|Page reload sent to client(s)."
+					}
+				}
+			],
+		},
+		{
+			"label": "[nginx] reload",
+			"type": "docker-compose",
+			"dockerCompose": {
+				"up": {
+					"services": [
+						"nginx"
+					]
+				},
+				"files": [
+					"${workspaceFolder}/docker-compose.yml",
+				]
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": true
+			},
+			"isBackground": true,
+			"problemMatcher": [
+				{
+					"pattern": [
+						{
+							"regexp": ".",
+							"file": 1,
+							"location": 2,
+							"message": 3
+						}
+					],
+					"background": {
+						"activeOnStart": true,
+						"beginsPattern": ".",
+						"endsPattern": "Configuration complete; ready for start up"
+					}
+				}
+			],
+		},
+		{
+			"label": "[full stack] debug",
+			"type": "docker-compose",
+			"dockerCompose": {
+				"up": {
+					"services": [
+						"nginx",
+						"api",
+						"frontend"
+					],
+				},
+				"files": [
+					"${workspaceFolder}/docker-compose.yml",
+				]
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": true
+			},
+			"isBackground": true,
+			"problemMatcher": [
+				{
+					"pattern": [
+						{
+							"regexp": ".",
+							"file": 1,
+							"location": 2,
+							"message": 3
+						}
+					],
+					"background": {
+						"activeOnStart": true,
+						"beginsPattern": ".",
+						"endsPattern": "Configuration complete; ready for start up"
+					}
+				}
+			],
 		},
 	]
 }
