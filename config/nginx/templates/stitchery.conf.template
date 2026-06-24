@@ -1,12 +1,20 @@
 # default.conf.template
 
+# Service Name Map (for HTTP 400-500 error page)
+map $request_uri $service_name {
+    default         "Stitchery";
+    ~/api/graphql   "GraphQL";
+    ~/api           "API Gateway";
+    ~/pgadmin4      "pgAdmin 4";
+}
+
+error_log /var/log/nginx/error.log debug;
+
 server {
     listen 80 default_server;
     server_name ${APP_DOMAIN};
 
     location / {
-        # default_type application/json;
-        # return 200 '{"status":"success","message":"Fixed JSON response"}';
         return 301 https://$host$request_uri;
     }
 
@@ -18,6 +26,15 @@ server {
 server {
     listen 443 ssl default_server;
     server_name ${APP_DOMAIN};
+
+    resolver 127.0.0.11 valid=30s;
+
+    set $error_code $status;
+
+    # Global intercept switch
+    proxy_intercept_errors on;
+    error_page 404  502 503 504 = @service_down;
+
     server_tokens off;
     client_max_body_size 20M;
 
@@ -27,28 +44,60 @@ server {
     include /etc/nginx/ssl/options-ssl-nginx.conf;
     ssl_dhparam /etc/nginx/ssl/ssl-dhparams.pem;
 
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_set_header X-Url-Scheme $scheme;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host $http_host;
+    proxy_redirect off;
+
+    set $api_rest api:${API_PORT_REST};
+    set $api_graph api:${API_PORT_GRAPHQL};
+    set $frontend frontend:${FRONTEND_PORT};
+    set $pgadmin pg-admin;
+
+
     location / {
-        proxy_set_header X-Forwarded-Proto https;
-        proxy_set_header X-Url-Scheme $scheme;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header Host $http_host;
-        proxy_redirect off;
-        proxy_pass http://frontend:8080;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_pass http://$frontend;
     }
 
-    location /api {
-        proxy_set_header X-Forwarded-Proto https;
-        proxy_set_header X-Url-Scheme $scheme;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header Host $http_host;
-        proxy_redirect off;
-        proxy_pass http://api:3000;
+    location ^~ /static {       
+        alias /var/www/assets;
+        try_files $uri $uri.svg $uri.webp $uri.jpg $uri.png $uri.gif =404;
+
+        types {
+            image/jpg       jpg;
+            image/png       png;
+            image/gif       gif;
+            image/webp      webp;
+            image/svg+xml   svg;
+        }
+    }
+
+    location ^~ /api {
+        rewrite ^/api/?(.*)$ /$1 break;
+        proxy_pass http://$api_rest;
     }
     
-    location /pgadmin4/ {
-        proxy_set_header X-Script-Name /pgadmin4;
-        proxy_set_header Host $host;
-        proxy_pass http://pg-admin/;
-        proxy_redirect off;
+    location = /api/graphql {  
+        proxy_pass http://$api_graph;
+    }
+
+    location = /pgadmin4 {
+        proxy_set_header X-Script-Name pgAdmin4;
+        proxy_pass http://$pgadmin;
+    }
+
+    location = /error.html {
+        root /var/www/html;
+        sub_filter_once off;
+        sub_filter '__SERVICE_NAME__' '$service_name';     
+        sub_filter '__HTTP_STATUS__' '$error_code';
+    }
+
+    location @service_down {
+        
+        rewrite ^ /error.html;
     }
 }

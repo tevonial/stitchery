@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Service Unplugged</title>
+        <style>
+            :root {
+                --bg-color: #f4f6f9;
+                --text-color: #333333;
+                --accent-color: #ff5252;
+                --card-bg: #ffffff;
+            }
+
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --bg-color: #121214;
+                    --text-color: #e1e1e6;
+                    --accent-color: #ff6b6b;
+                    --card-bg: #1d1d21;
+                }
+            }
+
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                    Helvetica, Arial, sans-serif;
+                background-color: var(--bg-color);
+                color: var(--text-color);
+                margin: 0;
+                padding: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                text-align: center;
+            }
+
+            .container {
+                max-width: 500px;
+                padding: 2.5rem;
+                background: var(--card-bg);
+                border-radius: 12px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+                margin: 20px;
+            }
+
+            .illustration {
+                width: 180px;
+                height: 180px;
+                margin: 0 auto 2rem;
+            }
+
+            h1 {
+                font-size: 2.2rem;
+                margin: 0 0 0.5rem 0;
+                font-weight: 700;
+            }
+
+            .service-tag {
+                display: inline-block;
+                background-color: rgba(255, 82, 82, 0.1);
+                color: var(--accent-color);
+                padding: 0.3rem 0.8rem;
+                border-radius: 20px;
+                font-size: 1.1rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                margin-bottom: 1.5rem;
+                display: none; /* Hidden by default, shown via JS if query param exists */
+            }
+
+            p {
+                color: #737380;
+                font-size: 1.1rem;
+                line-height: 1.6;
+                margin: 0 0 2rem 0;
+            }
+
+            @media (prefers-color-scheme: dark) {
+                p {
+                    color: #a8a8b3;
+                }
+            }
+
+            .retry-btn {
+                display: inline-block;
+                background-color: var(--accent-color);
+                color: white;
+                border: none;
+                padding: 0.8rem 2rem;
+                font-size: 1rem;
+                font-weight: 600;
+                border-radius: 6px;
+                cursor: pointer;
+                text-decoration: none;
+                transition:
+                    transform 0.1s ease,
+                    opacity 0.2s ease;
+            }
+
+            .retry-btn:hover {
+                opacity: 0.9;
+            }
+
+            .retry-btn:active {
+                transform: scale(0.98);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div id="service-badge" class="service-tag"></div>
+            <div class="illustration">
+                <svg
+                    viewBox="0 0 200 200"
+                    width="100%"
+                    height="100%"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+                    <g fill="#A8A8B3" opacity="0.7">
+                        <rect
+                            x="20"
+                            y="70"
+                            width="40"
+                            height="60"
+                            rx="8"
+                            fill="currentColor"
+                        />
+                        <rect
+                            x="32"
+                            y="85"
+                            width="6"
+                            height="12"
+                            rx="2"
+                            fill="#121214"
+                        />
+                        <rect
+                            x="32"
+                            y="103"
+                            width="6"
+                            height="12"
+                            rx="2"
+                            fill="#121214"
+                        />
+                        <rect
+                            x="48"
+                            y="85"
+                            width="6"
+                            height="12"
+                            rx="2"
+                            fill="#121214"
+                        />
+                        <rect
+                            x="48"
+                            y="103"
+                            width="6"
+                            height="12"
+                            rx="2"
+                            fill="#121214"
+                        />
+                    </g>
+
+                    <path
+                        d="M 60,100 C 90,100 80,160 130,150 C 160,140 150,100 165,100"
+                        fill="none"
+                        stroke="#FF5252"
+                        stroke-width="8"
+                        stroke-linecap="round"
+                    />
+
+                    <g transform="translate(145, 82)">
+                        <rect
+                            x="0"
+                            y="8"
+                            width="12"
+                            height="5"
+                            rx="1"
+                            fill="#E2E8F0"
+                        />
+                        <rect
+                            x="0"
+                            y="23"
+                            width="12"
+                            height="5"
+                            rx="1"
+                            fill="#E2E8F0"
+                        />
+                        <rect
+                            x="12"
+                            y="0"
+                            width="25"
+                            height="36"
+                            rx="6"
+                            fill="#FF5252"
+                        />
+                        <rect
+                            x="37"
+                            y="13"
+                            width="8"
+                            height="10"
+                            fill="#D32F2F"
+                        />
+                    </g>
+                </svg>
+            </div>
+
+            <h1>Service Unplugged</h1>
+            <p>
+                The requested backend service appears to be down or unreachable.
+                The Docker daemon might still be spinning it up.
+            </p>
+
+            <p>HTTP Status <div id="service-message"></div></p>
+
+            <button class="retry-btn" onclick="window.location.reload()">
+                Retry Connection
+            </button>
+        </div>
+
+        <script>
+            const serviceName = "__SERVICE_NAME__";
+            const httpStatus = __HTTP_STATUS__;
+
+            const statusMessages = {
+                '000': "Unknown Error",
+                '400': "Client Error",
+                '500': "Server Error"
+            }
+
+            const statusMessage = statusMessages[httpStatus] ?? statusMessages[Math.floor(httpStatus / 100) * 100];
+
+            document.addEventListener("DOMContentLoaded", function () {   
+                const badge = document.getElementById("service-badge");
+                const message = document.getElementById("service-message");
+
+                document.title = "Service Unplugged: " + serviceName;
+                badge.textContent = serviceName.toUpperCase() + " OFFLINE";
+                badge.style.display = "inline-block";
+
+                message.textContent = statusMessage;
+            });
+        </script>
+    </body>
+</html>
