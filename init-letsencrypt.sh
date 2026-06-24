@@ -12,7 +12,7 @@ fi
 
 nginx_config="${CONFIG_DIR:-./config}/nginx"
 certbot_config="${CONFIG_DIR:-./config}/certbot"
-letsencrypt_config="${CONFIG_DIR:-./config}/letsencrypt"
+certificates="${certbot_config}/letsencrypt/certificates"
 rsa_key_size=${RSA_KEY_SIZE:-4096}
 domain="$APP_DOMAIN"
 
@@ -21,7 +21,7 @@ if [ -z "$domain" ]; then
     exit 1
 fi
 
-if [ -d "$letsencrypt_config/live/$domain" ]; then
+if [ -d "$certificates/live/$domain" ]; then
     read -p "Existing data found for $domain. Continue and replace existing certificate? (y/N) " decision
     if [ "$decision" != "Y" ] && [ "$decision" != "y" ]; then
         exit
@@ -37,11 +37,11 @@ if [ ! -e "$nginx_options/options-ssl-nginx.conf" ] || [ ! -e "$nginx_options/ss
 fi
 
 printf "\n### Creating dummy certificate for %s ...\n" $domain
-mkdir -p "$letsencrypt_config/live/$domain"
+mkdir -p "$certificates/live/$domain"
 certs_dir="/etc/letsencrypt/live/$domain"
 
 docker compose -f "docker-compose.yml" run --rm --entrypoint "\
-  openssl req -x509 -nodes -newkey rsa:$rsa_key_size -days 1\
+  openssl req -x509 -nodes -newkey rsa:$rsa_key_size -days 10\
     -config '/etc/ssl/openssl.cnf' \
     -keyout '$certs_dir/privkey.pem' \
     -out '$certs_dir/fullchain.pem' \
@@ -52,9 +52,9 @@ docker compose  -f "docker-compose.yml" up --force-recreate -d nginx
 
 printf "\n### Deleting dummy certificate for %s ...\n" $domain
 docker compose  -f "docker-compose.yml" run --rm --entrypoint "\
-  rm -Rf $letsencrypt_config/live/$domain && \
-  rm -Rf $letsencrypt_config/archive/$domain && \
-  rm -Rf $letsencrypt_config/renewal/$domain.conf" certbot
+  rm -Rf $certificates/live/$domain && \
+  rm -Rf $certificates/archive/$domain && \
+  rm -Rf $certificates/renewal/$domain.conf" certbot
 
 printf "\n### Requesting Let's Encrypt certificate for %s ...\n" $domain
 #Join $domain to -d args
@@ -70,6 +70,7 @@ case "$SSL_EMAIL" in
 esac
 
 # Enable staging mode if needed
+staging_arg=""
 if [ $CERTBOT_STAGING = "true" ]; then staging_arg="--staging"; fi
 
 docker compose -f "docker-compose.yml" run --rm --entrypoint "\
