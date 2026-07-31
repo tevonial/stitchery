@@ -33,7 +33,7 @@ server {
 
     # Global intercept switch
     proxy_intercept_errors on;
-    error_page 404  502 503 504 = @service_down;
+    error_page 404 502 503 504 = @service_down;
 
     server_tokens off;
     client_max_body_size 20M;
@@ -84,9 +84,11 @@ server {
         proxy_pass http://$api_graph;
     }
 
-    location = /pgadmin4 {
-        proxy_set_header X-Script-Name pgAdmin4;
+    location /pgadmin4/ {
+        proxy_set_header X-Script-Name /pgadmin4;
+        proxy_set_header Host $host;
         proxy_pass http://$pgadmin;
+        proxy_redirect off;
     }
 
     location = /error.html {
@@ -98,6 +100,83 @@ server {
 
     location @service_down {
         
+        rewrite ^ /error.html;
+    }
+}
+
+
+server {
+    listen 8080 default_server;
+    server_name _;
+
+    resolver 127.0.0.11 valid=30s;
+
+    set $error_code $status;
+
+    # Global intercept switch
+    proxy_intercept_errors on;
+    error_page 404 502 503 504 = @service_down;
+
+    server_tokens off;
+    client_max_body_size 20M;
+
+
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_set_header X-Url-Scheme $scheme;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host $http_host;
+    proxy_redirect off;
+
+    set $api_rest api:${API_PORT_REST};
+    set $api_graph api:${API_PORT_GRAPHQL};
+    set $frontend frontend:${FRONTEND_PORT};
+    set $pgadmin pg-admin;
+
+
+    location / {
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        add_header Cache-Control "no-cache";
+        proxy_pass http://$frontend;
+    }
+
+    location ^~ /static {       
+        alias /var/www/assets;
+        try_files $uri $uri.svg $uri.webp $uri.jpg $uri.png $uri.gif =404;
+
+        types {
+            image/jpg       jpg;
+            image/png       png;
+            image/gif       gif;
+            image/webp      webp;
+            image/svg+xml   svg;
+        }
+    }
+
+    location ^~ /api {
+        rewrite ^/api/?(.*)$ /$1 break;
+        proxy_pass http://$api_rest;
+    }
+    
+    location = /api/graphql {  
+        proxy_pass http://$api_graph;
+    }
+
+    location /pgadmin4 {
+        proxy_set_header X-Script-Name /pgadmin4;
+        proxy_set_header Host $host;
+        proxy_pass http://$pgadmin;
+        proxy_redirect off;
+    }
+
+    location = /error.html {
+        root /var/www/html;
+        sub_filter_once off;
+        sub_filter '__SERVICE_NAME__' '$service_name';     
+        sub_filter '__HTTP_STATUS__' '$error_code';
+    }
+
+    location @service_down {        
         rewrite ^ /error.html;
     }
 }
