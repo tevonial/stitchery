@@ -29,6 +29,7 @@ services:
             - API_PORT_GRAPHQL
             - API_PORT_REST
             - CONNECT_CONFIG_DIR
+            - CONNECT_EXTENSIONS
             - APOLLO_KEY
             - APOLLO_GRAPH_REF
             - APOLLO_SCHEMA_REPORTING
@@ -116,6 +117,13 @@ services:
             - "${CONFIG_DIR}/certbot/letsencrypt/config:/var/lib/letsencrypt"
             - "${CONFIG_DIR}/certbot/www:/var/www/certbot"
         entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+    dev-tunnel:
+        image: cloudflare/cloudflared:latest
+        restart: unless-stopped
+        command: tunnel run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+        depends_on:
+            - nginx
 
 volumes:
     pg-admin-data:
