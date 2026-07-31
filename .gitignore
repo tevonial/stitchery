@@ -1,6 +1,5 @@
 # Visual Studio Code
 .vscode/*
-!.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
@@ -10,10 +9,22 @@
 config/secrets/*
 !config/secrets/*.template
 
+# Node deps
+node_modules
+
 # SSL
 config/**/*.pem
 config/letsencrypt
 config/nginx/ssl
 
+# Proprietary files
+config/connect
+
 # PGAdmin4
 config/pgadmin4
+
+# Nginx files
+assets/*.Identifier
+
+# API Testing
+.bruno
