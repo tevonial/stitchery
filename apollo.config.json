@@ -1,0 +1,19 @@
+{
+  "client": {
+    "service": {
+      "name": "Stitchery",
+      // If you have a local schema file downloaded:
+      "localSchemaFile": "./stitchery-api/src/api/graphql/generated/schema.graphql"
+      // Or point directly to your dev backend endpoint:
+      // "url": "https://stitchery.localhost/api/graphql"
+    },
+    "includes": [
+      "./stitchery-frontend/src/**/*.ts"
+    ],
+    "excludes": [
+      "**/*.graphql",
+      "**/node_modules/*",
+      "**/__tests__"
+    ]
+  }
+}
