@@ -17,7 +17,8 @@
                 "esbenp.prettier-vscode",
                 "apollographql.vscode-apollo",
                 "Angular.ng-template",
-                "dbcode.dbcode"
+                "dbcode.dbcode",
+                "bruno-api-client.bruno"
             ]
         }
     },
