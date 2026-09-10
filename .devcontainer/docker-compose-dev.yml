@@ -4,7 +4,7 @@ services:
     dev:
         build: .
         volumes:
-            - ..:/workspace:cached
+            - ..:/workspace
             - bash_history:/commandhistory
             - node_modules_frontend:/workspace/stitchery-frontend/node_modules
             - node_modules_api:/workspace/stitchery-api/node_modules
